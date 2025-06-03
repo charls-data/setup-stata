@@ -1,0 +1,72 @@
+name: 'Setup Stata'
+description: 'Setup Stata in GitHub Actions workflows for Windows and Linux'
+author: 'CHARLS'
+branding:
+  icon: 'bar-chart-2'
+  color: 'blue'
+
+inputs:
+  stata-url-windows:
+    description: 'URL to download the Stata installer for Windows'
+    required: false
+  stata-url-linux:
+    description: 'URL to download the Stata installer for Linux'
+    required: false
+  stata-license:
+    description: 'Stata license content'
+    required: true
+  stata-version:
+    description: 'Stata version'
+    required: true
+    default: '18'
+  stata-edition:
+    description: 'Stata edition. Only values "mp" or "se" are allowed.'
+    required: true
+    default: 'mp'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate Windows URL
+      if: runner.os == 'Windows' && inputs.stata-url-windows == ''
+      shell: bash
+      run: |
+        echo "::error::stata-url-windows is required when running on Windows."
+        exit 1
+
+    - name: Validate Linux URL
+      if: runner.os == 'Linux' && inputs.stata-url-linux == ''
+      shell: bash
+      run: |
+        echo "::error::stata-url-linux is required when running on Linux."
+        exit 1
+
+    - name: Validate Stata edition
+      if: inputs.stata-edition != 'mp' && inputs.stata-edition != 'se'
+      shell: bash
+      run: |
+        echo "::error::Invalid stata-edition values: ${{ inputs.stata-edition }}, valid values are 'mp' or 'se'."
+        exit 1
+
+    - name: Run Stata Setup Script on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        STATA_URL: ${{ inputs.stata-url-windows }}
+        STATA_LICENSE: ${{ inputs.stata-license }}
+        STATA_VERSION: ${{ inputs.stata-version }}
+        STATA_EDITION: ${{ inputs.stata-edition }}
+      run: |
+        ${{ github.action_path }}/setup_win.ps1
+
+    - name: Run Stata Setup Script on Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        STATA_URL: ${{ inputs.stata-url-linux }}
+        STATA_LICENSE: ${{ inputs.stata-license }}
+        STATA_VERSION: ${{ inputs.stata-version }}
+        STATA_EDITION: ${{ inputs.stata-edition }}
+      run: |
+        chmod +x ${{ github.action_path }}/setup_linux.sh
+        ${{ github.action_path }}/setup_linux.sh

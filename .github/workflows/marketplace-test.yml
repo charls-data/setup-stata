@@ -1,0 +1,69 @@
+name: Marketplace-Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  win-test:
+    name: Test on Windows
+    runs-on: windows-2025
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Stata (Windows)
+        uses: charls-data/setup-stata@v1
+        with:
+          stata-url-windows: ${{ secrets.STATA_URL_WINDOWS }}
+          stata-license: ${{ secrets.STATA_LICENSE }}
+          stata-version: 18
+          stata-edition: "mp"
+
+      - name: Verify Stata Environment Variable
+        shell: pwsh
+        run: |
+          if (-not $env:STATA_EXE) {
+            Write-Host "::error::STATA_EXE environment variable is not set"
+            exit 1
+          }
+          Write-Host "STATA_EXE environment variable is set to: $env:STATA_EXE"
+
+          # Check if the environment variable points to a valid file
+          if (-not (Test-Path $env:STATA_EXE)) {
+            Write-Host "::error::Stata executable not found at: $env:STATA_EXE"
+            exit 1
+          }
+          Write-Host "Stata executable file exists at: $env:STATA_EXE"
+          Write-Host "Verification successful!"
+
+  linux-test:
+    name: Test on Linux
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Stata (Linux)
+        uses: charls-data/setup-stata@v1
+        with:
+          stata-url-linux: ${{ secrets.STATA_URL_LINUX }}
+          stata-license: ${{ secrets.STATA_LICENSE }}
+          stata-version: 18
+          stata-edition: "mp"
+
+      - name: Verify Stata Environment Variable
+        shell: bash
+        run: |
+          if [ -z "$STATA_EXE" ]; then
+            echo "::error::STATA_EXE environment variable is not set"
+            exit 1
+          fi
+          echo "STATA_EXE environment variable is set to: $STATA_EXE"
+
+          # Check if the environment variable points to a valid file
+          if [ ! -f "$STATA_EXE" ]; then
+            echo "::error::Stata executable not found at: $STATA_EXE"
+            exit 1
+          fi
+          echo "Stata executable file exists at: $STATA_EXE"
+          echo "Verification successful!"
